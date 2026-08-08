@@ -15,7 +15,7 @@ function kebab_to_camel() {
 	echo "$result" # myKebabCaseString
 }
 
-feats=(
+wt_feats=(
 	"smart-commit"
 	"smart-pull"
 	"smart-init"
@@ -24,16 +24,16 @@ feats=(
 	"build"
 )
 
-main_dir="$PWD"
-worktree_dir=".worktree"
-worktree_path="${main_dir}/${worktree_dir}"
-source_branch="$(git branch --show-current)"
+wt_main_dir="$PWD"
+wt_worktree_dir=".worktree"
+wt_worktree_path="${wt_main_dir}/${wt_worktree_dir}"
+wt_source_branch="$(git branch --show-current)"
 
 function wt_create() {
-	[[ ! -d "${worktree_path}" ]] && mkdir "${worktree_path}"
+	[[ ! -d "${wt_worktree_path}" ]] && mkdir "${wt_worktree_path}"
 	
-	for feat in "${feats[@]}"; do {
-		feat_path="${worktree_path}/${feat}"
+	for feat in "${wt_feats[@]}"; do {
+		feat_path="${wt_worktree_path}/${feat}"
 		feat_branch="feat/${feat}"
 		if [[ "${feat}" == "build" ]]; then {
 			feat_file="build.sh"
@@ -51,8 +51,8 @@ function wt_create() {
 		file_path="${file_dir}/${feat_file}"
 		
 		echo "Feature: ${feat}"
-		git worktree add -b "${feat_branch}" "${feat_path}" "${source_branch}" &>/dev/null \
-			&& echo "> created worktree branch [${feat_branch}] from branch [${source_branch}]"
+		git worktree add -b "${feat_branch}" "${feat_path}" "${wt_source_branch}" &>/dev/null \
+			&& echo "> created worktree branch [${feat_branch}] from branch [${wt_source_branch}]"
 		cd "${feat_path}"
 		[[ -f "${feat_path}/src/.gitkeep" ]] \
 			&& git rm "${feat_path}/src/.gitkeep" &>/dev/null \
@@ -63,24 +63,24 @@ function wt_create() {
 			
 		touchx "${file_path}" &>/dev/null \
 			&& printf '%s\n\n' "${file_content}" >"${file_path}" \
-			&& echo "> created file: ./${file_path#"${worktree_path}/"}"
+			&& echo "> created file: ./${file_path#"${wt_worktree_path}/"}"
 		
 		git asp \
 			"Created Branch: ${feat}" \
-			"- Added file: ./${file_path#"${worktree_path}/"}" &>/dev/null \
+			"- Added file: ./${file_path#"${wt_worktree_path}/"}" &>/dev/null \
 			&& echo "> pushed branch [${feat_branch}]"
 		
 		echo ""
 	} done
-	cd "${main_dir}"
+	cd "${wt_main_dir}"
 }
 function wt_delete() {
-	cd "${main_dir}"
-	rm -rf "${worktree_path}"
+	cd "${wt_main_dir}"
+	rm -rf "${wt_worktree_path}"
 	git worktree prune
 	branchL="$(git branch)"
 	branchR="$(git branch -r)"
-	for feat in "${feats[@]}"; do {
+	for feat in "${wt_feats[@]}"; do {
 		branch="feat/${feat}"
 		(grep -Eq "^[\*\+]? +$feat_branch" <<< "${branchL}") && git branch -D "${branch}"
 		(grep -Eq "^[\*\+]? +origin/${feat_branch}" <<< "${branchR}") && git push origin --delete "${branch}"
