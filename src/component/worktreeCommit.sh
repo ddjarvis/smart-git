@@ -9,10 +9,11 @@ function worktree_smartcommit() {
 	
 	for wt_dir in "${wt_dirs[@]}"; do {
 		wt_path="${worktree_path}/${wt_dir}"
-		echo "WT: ${wt_dir}"
+		printf '\n'
+		printf "\e[1mWorktree:\e[0m %s\n" "${wt_dir}"
 		cd "${wt_path}"
 		smartCommit
-		printf '\n\n'
+		printf '\n'
 	} done
 	
 	cd "${main_dir}"
