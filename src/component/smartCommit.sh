@@ -45,7 +45,7 @@ function smartCommit() {
 		response="$1"; 
 	} else {
 		gitDiff="$(git diff)";
-		if [[ "${gitDiff}" == "" ]]; then { echo "No changes to commit."; unset -f askYesNo; return; } fi
+		if [[ "${gitDiff}" == "" ]]; then { echo -e "\e[3;90mNo changes to commit.\e[0m"; unset -f askYesNo; return; } fi
 		printf "Generating..."
 		response="$(aichat --role "smart-commits" "git diff: ${gitDiff}")"; 
 		printf "\r"
@@ -62,14 +62,21 @@ function smartCommit() {
 	if (( commit > 0 || push > 0 )); then {
 		branch="$(git branch --show-current)"
 		repo="$(git remote -v | grep -E "^${remote}.+\(push\)$" | sed -r 's/.+github\.com\/(.+)\.git.+/\1/')"
+		printf '\r\e[3A\e[0J'
 	} fi
 	if (( commit > 0 && push > 0 )); then { 
-		git sp "${title}" "${description}" &>/dev/null \
-			&& printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}"
+		printf 'Processing %s...\n' 'commit and push'
+		git sp "${title}" "${description}" &>/dev/null && {
+			printf '\r\e[1A\e[0J'
+			printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}"
+			printf '> Pushing changes from branch [%s] to remote repo: %s\n' "${branch}" "${repo}"
+		}
 	} elif (( commit > 0 )); then { 
-		git s "${title}" "${description}" &>/dev/null \
-			&& printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}" \
-			&& printf '> Pushing changes from branch [%s] to remote repo: %s\n' "${branch}" "${repo}"
-	} fi;
+		printf 'Processing %s...\n' 'commit'
+		git s "${title}" "${description}" &>/dev/null && {
+			printf '\r\e[1A\e[0J'
+			printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}"
+		}
+	} fi
 	unset -f askYesNo;
 }
