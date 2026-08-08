@@ -44,7 +44,16 @@ function smartCommit() {
 	if (( $# > 0 )); then { 
 		response="$1"; 
 	} else {
-		gitDiff="$(git diff)";
+		untracked=0
+		staged=0
+		
+		(grep -q "Untracked files:" <<< "$(git status)") && git add -A .
+		
+		gitDiff="$(git diff)"
+		if [[ "${gitDiff}" == "" ]]; then {
+			gitDiff="$(git diff)"
+			[[ "${gitDiff}" == "" ]] && gitDiff="$(git diff --staged)"
+		} fi
 		if [[ "${gitDiff}" == "" ]]; then { echo -e "\e[3;90mNo changes to commit.\e[0m"; unset -f askYesNo; return; } fi
 		printf "Generating..."
 		response="$(aichat --role "smart-commits" "git diff: ${gitDiff}")"; 
