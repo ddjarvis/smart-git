@@ -38,7 +38,9 @@ function smartCommit() {
 	local response;
 	local commit=0
 	local push=0
-	local gitDiff title description
+	local gitDiff="" title="" description=""
+	local remote="origin" branch="" repo=""
+	
 	if (( $# > 0 )); then { 
 		response="$1"; 
 	} else {
@@ -57,10 +59,17 @@ function smartCommit() {
 		if (askYesNo "Push Commits?"); then push=1; fi
 	} fi
 	
+	if (( commit > 0 || push > 0 )); then {
+		branch="$(git branch --show-current)"
+		repo="$(git remote -v | grep -E "^${remote}.+\(push\)$" | sed -r 's/.+github\.com\/(.+)\.git.+/\1/')"
+	} fi
 	if (( commit > 0 && push > 0 )); then { 
-		git sp "${title}" "${description}"; 
+		git sp "${title}" "${description}" &>/dev/null \
+			&& printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}"
 	} elif (( commit > 0 )); then { 
-		git s "${title}" "${description}"; 
+		git s "${title}" "${description}" &>/dev/null \
+			&& printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}" \
+			&& printf '> Pushing changes from branch [%s] to remote repo: %s\n' "${branch}" "${repo}"
 	} fi;
 	unset -f askYesNo;
 }
