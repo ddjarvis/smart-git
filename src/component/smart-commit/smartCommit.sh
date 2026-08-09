@@ -77,7 +77,7 @@ function smartCommit() {
 		description="$(echo "$response" | awk '/```description/{flag=1; next} /```/{flag=0} flag')"; 
 		printf "\033[1m%s\033[0m\n\n%s\n\n" "${title}" "${description}";
 	} elif (( forPush > 0 )); then {
-		printf 'There are %s unpushed commits in the current branch\n' "${forPush}"
+		printf 'There are %s unpushed commits in the current branch.\n' "${forPush}"
 	} fi
 	
 	if (( forCommit > 0 )); then
