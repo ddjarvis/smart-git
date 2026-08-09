@@ -40,6 +40,7 @@ function smartCommit() {
 	local push=0
 	local gitDiff="" title="" description=""
 	local remote="origin" branch="" repo=""
+	local linesUp=0
 	
 	if (( $# > 0 )); then { 
 		response="$1"; 
@@ -81,16 +82,18 @@ function smartCommit() {
 	} fi
 	
 	if (( forCommit > 0 )); then
+		((linesUp++))
 		if (askYesNo "Commit?"); then commit=1; fi
 	fi
 	if (( commit > 0 || forPush > 0 )); then
+		((linesUp++))
 		if (askYesNo "Push Commits?"); then push=1; fi
 	fi
 	
 	if (( commit > 0 || push > 0 )); then {
 		branch="$(git branch --show-current)"
 		repo="$(git remote -v | grep -E "^${remote}.+\(push\)$" | sed -r 's/.+github\.com\/(.+)\.git.+/\1/')"
-		printf '\r\e[2A\e[0J'
+		printf '\r%b\e[0J' "\e[${linesUp}A"
 	} fi
 	if (( commit > 0 )); then { 
 		printf 'Processing %s...\n' 'commit(s)'
