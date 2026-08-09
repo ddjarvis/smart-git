@@ -104,6 +104,7 @@ function smartCommit() {
 			printf '\r\e[1A\e[0J'
 			printf '\e[31mProcessing %s failed.\e[0m\n' 'commit(s)'
 		} fi
+		sleep 0.6
 	} fi
 	if (( push > 0 )); then { 
 		printf 'Processing %s...\n' 'push(es)'
@@ -114,6 +115,7 @@ function smartCommit() {
 			printf '\r\e[1A\e[0J'
 			printf '\e[31mProcessing %s failed.\e[0m\n' 'push(es)'
 		} fi
+		sleep 0.6
 	} fi
 	unset -f askYesNo;
 }
