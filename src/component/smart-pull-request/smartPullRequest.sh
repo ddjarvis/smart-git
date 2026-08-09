@@ -27,9 +27,10 @@ function smartPullRequest() {
 	amLink="${ghLink}"
 	amPkg="com.github.android"
 	
-	termux-clipboard-set "${prTitle}"
+	# echo "${prBody}"
+	termux-clipboard-set "${prBody}"
 	am start --user 0 -a "${amAction}" -d "${amLink}" "${amPkg}" &>/dev/null
-	echo "${prBody}" | mm
+	termux-clipboard-set "${prTitle}"
 }
 
 # smartPullRequest "dev" "feat/smart-commit"
