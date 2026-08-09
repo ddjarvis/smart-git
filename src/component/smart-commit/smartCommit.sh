@@ -46,6 +46,8 @@ function smartCommit() {
 	} else {
 		untracked=0
 		staged=0
+		forCommit=0
+		forPush=0
 		
 		(grep -q "Untracked files:" <<< "$(git status)") && git add -A .
 		
@@ -54,8 +56,17 @@ function smartCommit() {
 			gitDiff="$(git diff)"
 			[[ "${gitDiff}" == "" ]] && gitDiff="$(git diff --staged)"
 		} fi
-		if [[ "${gitDiff}" == "" ]]; then { echo -e "\e[3;90mNo changes to commit.\e[0m"; unset -f askYesNo; return; } fi
-		printf "Generating..."
+		if [[ "${gitDiff}" != "" ]]; then forCommit=1; fi
+		
+		forPush="$(git rev-list --count @{upstream}..HEAD 2>/dev/null)"
+		
+		if (( forCommit == 0 && forPush == 0 )); then {
+			echo -e "\e[3;90mNo changes to commit.\e[0m"
+			unset -f askYesNo
+			return
+		} fi
+		
+		printf '\e[3m%s\e[0m\n' "Generating..."
 		response="$(aichat --role "smart-commits" "git diff: ${gitDiff}")"; 
 		printf "\r"
 	} fi; 
@@ -63,28 +74,30 @@ function smartCommit() {
 	description="$(echo "$response" | awk '/```description/{flag=1; next} /```/{flag=0} flag')"; 
 	
 	printf "\033[1m%s\033[0m\n\n%s\n\n" "${title}" "${description}";
-	if (askYesNo "Commit?"); then {
-		commit=1
+	if (( forCommit > 0 )); then
+		if (askYesNo "Commit?"); then commit=1; fi
+	fi
+	if (( commit > 0 || forPush > 0 )); then
 		if (askYesNo "Push Commits?"); then push=1; fi
-	} fi
+	fi
 	
 	if (( commit > 0 || push > 0 )); then {
 		branch="$(git branch --show-current)"
 		repo="$(git remote -v | grep -E "^${remote}.+\(push\)$" | sed -r 's/.+github\.com\/(.+)\.git.+/\1/')"
-		printf '\r\e[3A\e[0J'
+		printf '\r\e[2A\e[0J'
 	} fi
-	if (( commit > 0 && push > 0 )); then { 
-		printf 'Processing %s...\n' 'commit and push'
-		git sp "${title}" "${description}" &>/dev/null && {
-			printf '\r\e[1A\e[0J'
-			printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}"
-			printf '> Pushing changes from branch [%s] to remote repo: %s\n' "${branch}" "${repo}"
-		}
-	} elif (( commit > 0 )); then { 
-		printf 'Processing %s...\n' 'commit'
+	if (( commit > 0 )); then { 
+		printf 'Processing %s...\n' 'commit(s)'
 		git s "${title}" "${description}" &>/dev/null && {
 			printf '\r\e[1A\e[0J'
 			printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}"
+		}
+	} fi
+	if (( push > 0 )); then { 
+		printf 'Processing %s...\n' 'push(es)'
+		git p "${title}" "${description}" &>/dev/null && {
+			printf '\r\e[1A\e[0J'
+			printf '> Pushed changes from branch [%s] to remote repo: %s\n' "${branch}" "${repo}"
 		}
 	} fi
 	unset -f askYesNo;
