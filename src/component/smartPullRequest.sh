@@ -1,2 +1,0 @@
-# component: smart-pull-request
-
