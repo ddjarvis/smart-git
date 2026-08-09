@@ -49,7 +49,7 @@ function smartCommit() {
 		forCommit=0
 		forPush=0
 		
-		(grep -q "Untracked files:" <<< "$(git status)") && git add -A .
+		(git ls-files --others --exclude-standard -z | grep -qz .) && git add -A .
 		
 		gitDiff="$(git diff)"
 		if [[ "${gitDiff}" == "" ]]; then {
@@ -88,17 +88,23 @@ function smartCommit() {
 	} fi
 	if (( commit > 0 )); then { 
 		printf 'Processing %s...\n' 'commit(s)'
-		git s "${title}" "${description}" &>/dev/null && {
+		if (git s "${title}" "${description}" &>/dev/null); then {
 			printf '\r\e[1A\e[0J'
 			printf '> Committed changes to branch [%s]: %s\n' "${branch}" "${title}"
-		}
+		} else {
+			printf '\r\e[1A\e[0J'
+			printf '\e[31mProcessing %s failed.\e[0m\n' 'commit(s)'
+		} fi
 	} fi
 	if (( push > 0 )); then { 
 		printf 'Processing %s...\n' 'push(es)'
-		git p "${title}" "${description}" &>/dev/null && {
+		if (git p &>/dev/null); then {
 			printf '\r\e[1A\e[0J'
 			printf '> Pushed changes from branch [%s] to remote repo: %s\n' "${branch}" "${repo}"
-		}
+		} else {
+			printf '\r\e[1A\e[0J'
+			printf '\e[31mProcessing %s failed.\e[0m\n' 'push(es)'
+		} fi
 	} fi
 	unset -f askYesNo;
 }
